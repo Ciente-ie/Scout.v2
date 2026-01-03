@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Scout — Ciente IE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  body { background:#020617; }
+  .card { background:#1e293b; border-radius:12px; padding:10px; }
+  .title { font-size:11px; font-weight:600; color:#cbd5f5; }
+  .btn {
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; color:white; border-radius:8px;
+    user-select:none;
+  }
+  .btn-action { aspect-ratio:1/1; font-size:11px; }
+  .btn-active { outline:3px solid #22c55e; }
+
+  .zone{
+    width:100%; height:100%;
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:rgba(255,255,255,.95);
+  }
+  .zone:hover{ background:rgba(255,255,255,.06); }
+  .zone.btn-active{
+    outline:3px solid #22c55e;
+    background:rgba(0,0,0,.18);
+  }
+</style>
+</head>
+
+<body class="text-white">
+
+<div class="p-3 space-y-3">
+
+<!-- ================= GRID SUPERIOR ================= -->
+<div class="grid grid-cols-12 gap-3">
+
+<!-- DADOS -->
+<div class="col-span-4 card space-y-2">
+  <div class="flex items-center justify-between">
+    <div class="title">Dados da Partida</div>
+    <button id="btnEscalacao" onclick="abrirEscalacao()" class="btn bg-slate-700 px-2 py-[2px] text-[10px] hidden">
+      Escalação
+    </button>
+  </div>
+
+  <input id="inputAdv" placeholder="Adversário" class="w-full px-2 py-1 rounded text-black text-xs">
+  <input placeholder="Local" class="w-full px-2 py-1 rounded text-black text-xs">
+  <input type="date" class="w-full px-2 py-1 rounded text-black text-xs">
+
+  <div class="flex justify-between font-bold">
+    <span id="placar">0 - 0</span>
+    <span id="time">00:00</span>
+  </div>
+
+  <div class="grid grid-cols-4 gap-1 text-[10px]">
+    <button onclick="startTimer()" class="btn bg-green-600">▶</button>
+    <button onclick="pauseTimer()" class="btn bg-yellow-500">⏸</button>
+    <button onclick="resetTimer()" class="btn bg-slate-600">Int.</button>
+    <button onclick="finalizarPartida()" class="btn bg-red-600">Fim</button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-1">
+    <button onclick="golPro()" class="btn bg-green-700 text-xs">Gol Pró</button>
+    <button onclick="registrarEventoColetivo('Gol Contra')" class="btn bg-red-700 text-xs">Gol Contra</button>
+  </div>
+
+  <button onclick="abrirSubstituicao()" class="btn bg-blue-600 text-xs">Substituição</button>
+<button onclick="abrirModalAtleta('Assistência')" class="btn bg-indigo-600 text-xs">
+  Assistência
+</button>
+
+</div>
+
+
+
+<!-- SETOR -->
+<div class="col-span-5 card">
+  <div class="title flex justify-between">
+    <span>Setor da Ação</span>
+    <button onclick="invertSector()" class="btn bg-slate-600 px-2 text-[10px]">Inverter</button>
+  </div>
+
+  <div class="relative h-[150px] rounded-lg bg-green-700 overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute left-1/2 top-0 bottom-0 w-[2px] bg-white/35"></div>
+      <div class="absolute left-[18%] top-0 bottom-0 w-[2px] bg-white/22"></div>
+      <div class="absolute right-[18%] top-0 bottom-0 w-[2px] bg-white/22"></div>
+    </div>
+
+    <div class="absolute inset-0 grid grid-cols-3 gap-2 p-2">
+      <button id="labelLeft" data-sec="defesa" onclick="setSector('defesa')" class="zone btn-sector">Defesa</button>
+      <button data-sec="meio" onclick="setSector('meio')" class="zone btn-sector btn-active">Meio</button>
+      <button id="labelRight" data-sec="ataque" onclick="setSector('ataque')" class="zone btn-sector">Ataque</button>
+    </div>
+  </div>
+</div>
+
+<!-- POSSE + CARTÕES -->
+<div class="col-span-3 flex flex-col gap-3">
+  <div class="card">
+    <div class="title">Posse de Bola</div>
+    <div class="flex flex-col h-[120px] gap-2">
+      <button onclick="setPosse('america')" data-posse="america" class="btn btn-posse bg-red-600 btn-active" style="height:40%">América</button>
+      <button onclick="setPosse('adv')" data-posse="adv" id="btnAdversario" class="btn btn-posse bg-blue-600" style="height:40%">Adversário</button>
+      <button onclick="setPosse('parada')" data-posse="parada" class="btn btn-posse bg-yellow-500 text-black" style="height:20%">Bola Parada</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="title">Cartões</div>
+    <div class="flex flex-col h-[80px] gap-2">
+      <button onclick="abrirModalAtleta('Cartão Amarelo')" class="btn bg-yellow-400 text-black h-1/2">Cartão Amarelo</button>
+      <button onclick="abrirModalAtleta('Cartão Vermelho')" class="btn bg-red-600 h-1/2">Cartão Vermelho</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ================= GRID INFERIOR ================= -->
+<div class="grid grid-cols-12 gap-3">
+<div class="col-span-9 card">
+  <div class="title">Ações</div>
+  <div class="grid grid-cols-4 gap-2">
+    <button onclick="abrirModalAtleta('Boa decisão')" class="btn btn-action bg-emerald-600">Boa decisão</button>
+    <button onclick="abrirModalAtleta('Erro NF')" class="btn btn-action bg-red-600">Erro NF</button>
+    <button onclick="abrirModalAtleta('Erro pressão')" class="btn btn-action bg-red-700">Erro pressão</button>
+    <button onclick="abrirModalAtleta('Defesa difícil')" class="btn btn-action bg-indigo-600">Defesa difícil</button>
+    <button onclick="abrirModalAtleta('Finalização')" class="btn btn-action bg-slate-600">Finalização</button>
+    <button onclick="abrirModalAtleta('Chance clara')" class="btn btn-action bg-slate-500">Chance clara</button>
+    <button onclick="registrarEventoColetivo('Fin. Adv')" class="btn btn-action bg-purple-600">Fin. Adv</button>
+    <button onclick="registrarEventoColetivo('Chance Adv')" class="btn btn-action bg-purple-700">Chance Adv</button>
+  </div>
+</div>
+
+<div class="col-span-3 card">
+  <div class="title flex justify-between">
+    <span>Histórico</span>
+    <button onclick="undoLast()" class="btn bg-yellow-600 px-2 text-[10px]">Desfazer</button>
+  </div>
+  <div id="log" class="max-h-[180px] overflow-y-auto"></div>
+</div>
+</div>
+</div>
+
+<!-- ================= MODAIS ================= -->
+
+<!-- ESCALAÇÃO -->
+<div id="modalEscalacao" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+  <div class="bg-slate-900 w-[760px] max-w-[92vw] max-h-[82vh] rounded-xl p-5 overflow-y-auto">
+    <div class="flex justify-between mb-3">
+      <h3 class="font-bold text-lg">Escalação</h3>
+      <button onclick="fecharEscalacao()" class="text-red-400">✕</button>
+    </div>
+    <div class="grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <div class="font-bold text-green-400 mb-1">Titulares</div>
+        <div id="listaTitulares"></div>
+      </div>
+      <div>
+        <div class="font-bold text-yellow-400 mb-1">Reservas</div>
+        <div id="listaReservas"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ATLETA (AÇÕES) -->
+<div id="modalAtleta" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+  <div class="bg-slate-900 w-[520px] max-w-[92vw] max-h-[82vh] rounded-xl p-5 overflow-y-auto">
+    <div class="flex justify-between mb-3">
+      <h3 id="tituloModalAtleta" class="font-bold text-lg"></h3>
+      <button onclick="fecharModalAtleta()" class="text-red-400">✕</button>
+    </div>
+    <div id="listaAtletasAcao" class="grid grid-cols-2 gap-2"></div>
+  </div>
+</div>
+
+<!-- SUBSTITUIÇÃO -->
+<div id="modalSub" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+  <div class="bg-slate-900 w-[720px] max-w-[92vw] max-h-[82vh] rounded-xl p-5 overflow-y-auto">
+    <div class="flex justify-between mb-3">
+      <h3 class="font-bold text-lg">Substituição</h3>
+      <button onclick="fecharSubstituicao()" class="text-red-400">✕</button>
+    </div>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <div class="font-bold text-green-400 mb-2">Sai (Titulares)</div>
+        <div id="listaSai" class="grid grid-cols-2 gap-2"></div>
+      </div>
+      <div>
+        <div class="font-bold text-yellow-400 mb-2">Entra (Reservas)</div>
+        <div id="listaEntra" class="grid grid-cols-2 gap-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+
+  const app = initializeApp({
+    apiKey: "AIzaSyDsoutLk5gmxq5zlu548HWFrox37u1zrxk",
+    authDomain: "appintegrado-ciente.firebaseapp.com",
+    projectId: "appintegrado-ciente"
+  });
+  const db = getFirestore(app);
+
+  // refs (NÃO depender de "id vira variável")
+  const elTime = document.getElementById("time");
+  const elPlacar = document.getElementById("placar");
+  const elLog = document.getElementById("log");
+
+  const modalEscalacao = document.getElementById("modalEscalacao");
+  const modalAtleta = document.getElementById("modalAtleta");
+  const modalSub = document.getElementById("modalSub");
+
+  const tituloModalAtleta = document.getElementById("tituloModalAtleta");
+  const listaAtletasAcao = document.getElementById("listaAtletasAcao");
+
+  const listaTitulares = document.getElementById("listaTitulares");
+  const listaReservas = document.getElementById("listaReservas");
+
+  const listaSai = document.getElementById("listaSai");
+  const listaEntra = document.getElementById("listaEntra");
+
+  const state = {
+    sector: "meio",
+    posse: "america",
+    scorePro: 0,
+    scoreCon: 0,
+    events: [],
+    elenco: [],
+    titulares: [],
+    reservas: [],
+    pending: null // { action, scoreDeltaPro, scoreDeltaCon }
+  };
+
+  /* =========================
+     CRONÔMETRO
+  ========================= */
+  let timer=null, seconds=0;
+  function formatTime(s){
+    const m=String(Math.floor(s/60)).padStart(2,"0");
+    const sec=String(s%60).padStart(2,"0");
+    return `${m}:${sec}`;
+  }
+  function startTimer(){
+    if(timer) return;
+    timer=setInterval(()=>{
+      seconds++;
+      elTime.innerText = formatTime(seconds);
+    },1000);
+  }
+  function pauseTimer(){ clearInterval(timer); timer=null; }
+  function resetTimer(){ pauseTimer(); seconds=0; elTime.innerText="00:00"; }
+
+  /* =========================
+     SETOR
+  ========================= */
+  function setSector(sec){
+    state.sector=sec;
+    document.querySelectorAll(".btn-sector").forEach(b=>{
+      b.classList.toggle("btn-active", b.dataset.sec===sec);
+    });
+  }
+
+  // inverter apenas defesa <-> ataque (igual ao seu original)
+  let inverted=false;
+  function invertSector(){
+    const left=document.getElementById("labelLeft");
+    const right=document.getElementById("labelRight");
+
+    if(!inverted){
+      left.innerText="Ataque"; left.dataset.sec="ataque"; left.onclick=()=>setSector("ataque");
+      right.innerText="Defesa"; right.dataset.sec="defesa"; right.onclick=()=>setSector("defesa");
+    }else{
+      left.innerText="Defesa"; left.dataset.sec="defesa"; left.onclick=()=>setSector("defesa");
+      right.innerText="Ataque"; right.dataset.sec="ataque"; right.onclick=()=>setSector("ataque");
+    }
+    inverted=!inverted;
+    setSector(state.sector);
+  }
+
+  /* =========================
+     POSSE
+  ========================= */
+  function setPosse(p){
+    state.posse=p;
+    document.querySelectorAll(".btn-posse").forEach(b=>{
+      b.classList.toggle("btn-active", b.dataset.posse===p);
+    });
+  }
+
+  /* =========================
+     PLACAR
+  ========================= */
+  function updateScore(){
+    elPlacar.innerText = `${state.scorePro} - ${state.scoreCon}`;
+  }
+
+  /* =========================
+     LOG
+  ========================= */
+  function renderLog(){
+    elLog.innerHTML="";
+    state.events.slice().reverse().forEach(e=>{
+      const d=document.createElement("div");
+      d.className="text-[10px] border-b border-slate-700 py-1";
+      const atletaNome = e?.atleta?.nome ? e.atleta.nome : "-";
+      d.innerText=`${e.time} | ${atletaNome} | ${e.sector} | ${e.posse} | ${e.action}`;
+      elLog.appendChild(d);
+    });
+  }
+  function undoLast(){ state.events.pop(); renderLog(); }
+
+  /* =========================
+     MODAL ATLETA (AÇÕES)
+  ========================= */
+  function abrirModalAtleta(action){
+    if(!state.titulares.length){
+      alert("Defina os titulares na Escalação primeiro.");
+      return;
+    }
+    state.pending = { action, scoreDeltaPro: 0, scoreDeltaCon: 0 };
+
+    tituloModalAtleta.innerText = action;
+    listaAtletasAcao.innerHTML = "";
+
+    state.titulares.forEach(a=>{
+      const b=document.createElement("button");
+      b.className="btn bg-slate-700 text-sm px-2 py-2";
+      b.innerText=a.nome;
+      b.onclick=()=>confirmarAcao(a);
+      listaAtletasAcao.appendChild(b);
+    });
+
+    modalAtleta.classList.remove("hidden");
+    if(!modalAtleta.classList.contains("flex")) modalAtleta.classList.add("flex");
+  }
+
+  function fecharModalAtleta(){
+    modalAtleta.classList.add("hidden");
+  }
+
+  function confirmarAcao(atleta){
+    // aplica delta (gol) se tiver
+    if(state.pending?.scoreDeltaPro) state.scorePro += state.pending.scoreDeltaPro;
+    if(state.pending?.scoreDeltaCon) state.scoreCon += state.pending.scoreDeltaCon;
+    updateScore();
+
+    state.events.push({
+      time: formatTime(seconds),
+      sector: state.sector,
+      posse: state.posse,
+      action: state.pending?.action || "Ação",
+      atleta
+    });
+
+    state.pending=null;
+    fecharModalAtleta();
+    renderLog();
+  }
+
+  // gols reaproveitam modal dos titulares
+  function golPro(){
+    if(!state.titulares.length){ alert("Defina os titulares na Escalação primeiro."); return; }
+    state.pending = { action:"Gol Pró", scoreDeltaPro:1, scoreDeltaCon:0 };
+    // abre modal e mantém pending
+    tituloModalAtleta.innerText = "Gol Pró";
+    listaAtletasAcao.innerHTML="";
+    state.titulares.forEach(a=>{
+      const b=document.createElement("button");
+      b.className="btn bg-slate-700 text-sm px-2 py-2";
+      b.innerText=a.nome;
+      b.onclick=()=>confirmarAcao(a);
+      listaAtletasAcao.appendChild(b);
+    });
+    modalAtleta.classList.remove("hidden");
+    if(!modalAtleta.classList.contains("flex")) modalAtleta.classList.add("flex");
+  }
+
+  function golCon(){
+    if(!state.titulares.length){ alert("Defina os titulares na Escalação primeiro."); return; }
+    state.pending = { action:"Gol Contra", scoreDeltaPro:0, scoreDeltaCon:1 };
+    tituloModalAtleta.innerText = "Gol Contra";
+    listaAtletasAcao.innerHTML="";
+    state.titulares.forEach(a=>{
+      const b=document.createElement("button");
+      b.className="btn bg-slate-700 text-sm px-2 py-2";
+      b.innerText=a.nome;
+      b.onclick=()=>confirmarAcao(a);
+      listaAtletasAcao.appendChild(b);
+    });
+    modalAtleta.classList.remove("hidden");
+    if(!modalAtleta.classList.contains("flex")) modalAtleta.classList.add("flex");
+  }
+
+  /* =========================
+     ESCALAÇÃO (ATIVOS, por posição, todos começam RESERVA, remover)
+  ========================= */
+  function normalizarPosicao(p){
+    const s = String(p || "").trim();
+    if(!s) return "Outros";
+    return s;
+  }
+
+  function renderEscalacao(){
+    listaTitulares.innerHTML = "";
+    listaReservas.innerHTML  = "";
+
+    // --- TITULARES
+    state.titulares.forEach(a=>{
+      const row = document.createElement("div");
+      row.className="flex items-center justify-between bg-slate-700 rounded px-2 py-1 mb-1";
+
+      const left = document.createElement("div");
+      left.className="text-sm";
+      left.innerText = a.nome;
+
+      const actions = document.createElement("div");
+      actions.className="flex gap-2";
+
+      const btnReserva = document.createElement("button");
+      btnReserva.className="text-xs text-yellow-300";
+      btnReserva.innerText="Reserva";
+      btnReserva.onclick=()=>{
+        state.titulares = state.titulares.filter(x=>x.nome!==a.nome);
+        state.reservas.push(a);
+        renderEscalacao();
+      };
+
+      const btnRem = document.createElement("button");
+      btnRem.className="text-xs text-red-300";
+      btnRem.innerText="❌";
+      btnRem.onclick=()=>{
+        state.titulares = state.titulares.filter(x=>x.nome!==a.nome);
+        renderEscalacao();
+      };
+
+      actions.appendChild(btnReserva);
+      actions.appendChild(btnRem);
+
+      row.appendChild(left);
+      row.appendChild(actions);
+      listaTitulares.appendChild(row);
+    });
+
+    // --- RESERVAS agrupadas por posição
+    const grupos = {};
+    state.reservas.forEach(a=>{
+      const key = normalizarPosicao(a.posicao);
+      if(!grupos[key]) grupos[key] = [];
+      grupos[key].push(a);
+    });
+
+    Object.keys(grupos).sort((a,b)=>a.localeCompare(b,'pt-BR')).forEach(pos=>{
+      const bloco = document.createElement("div");
+      bloco.className="mb-3";
+
+      const titulo = document.createElement("div");
+      titulo.className="text-xs font-bold text-slate-300 mb-1";
+      titulo.innerText = pos.toUpperCase();
+      bloco.appendChild(titulo);
+
+      grupos[pos].forEach(a=>{
+        const row = document.createElement("div");
+        row.className="flex items-center justify-between bg-slate-700 rounded px-2 py-1 mb-1";
+
+        const left = document.createElement("div");
+        left.className="text-sm";
+        left.innerText = a.nome;
+
+        const actions = document.createElement("div");
+        actions.className="flex gap-2";
+
+        const btnTit = document.createElement("button");
+        btnTit.className="text-xs text-green-300";
+        btnTit.innerText="Titular";
+        btnTit.onclick=()=>{
+          state.reservas = state.reservas.filter(x=>x.nome!==a.nome);
+          state.titulares.push(a);
+          renderEscalacao();
+        };
+
+        const btnRem = document.createElement("button");
+        btnRem.className="text-xs text-red-300";
+        btnRem.innerText="❌";
+        btnRem.onclick=()=>{
+          state.reservas = state.reservas.filter(x=>x.nome!==a.nome);
+          renderEscalacao();
+        };
+
+        actions.appendChild(btnTit);
+        actions.appendChild(btnRem);
+
+        row.appendChild(left);
+        row.appendChild(actions);
+        bloco.appendChild(row);
+      });
+
+      listaReservas.appendChild(bloco);
+    });
+  }
+
+  async function carregarElenco(){
+    const snap = await getDocs(collection(db,"elenco"));
+    const ativos = snap.docs
+      .map(d=>d.data())
+      .filter(a => (a?.status_principal || "") === "Ativo")
+      .map(a => ({
+        nome: String(a?.nome || "").trim(),
+        posicao: normalizarPosicao(a?.posicao)
+      }))
+      .filter(a => a.nome);
+
+    state.elenco = ativos;
+    state.titulares = [];        // todos começam reserva
+    state.reservas  = [...ativos];
+    renderEscalacao();
+  }
+
+  function abrirEscalacao(){
+    modalEscalacao.classList.remove("hidden");
+    if(!modalEscalacao.classList.contains("flex")) modalEscalacao.classList.add("flex");
+    carregarElenco();
+  }
+  function fecharEscalacao(){
+    modalEscalacao.classList.add("hidden");
+  }
+
+  /* =========================
+     SUBSTITUIÇÃO (Sai titulares / Entra reservas)
+  ========================= */
+  let sai=null, entra=null;
+
+  function abrirSubstituicao(){
+    if(!state.titulares.length){
+      alert("Defina os titulares na Escalação primeiro.");
+      return;
+    }
+
+    sai=null; entra=null;
+    listaSai.innerHTML="";
+    listaEntra.innerHTML="";
+
+    state.titulares.forEach(a=>{
+      const b=document.createElement("button");
+      b.className="btn bg-slate-700 text-sm px-2 py-2";
+      b.innerText=a.nome;
+      b.onclick=()=>selecionarSai(a,b);
+      listaSai.appendChild(b);
+    });
+
+    state.reservas.forEach(a=>{
+      const b=document.createElement("button");
+      b.className="btn bg-slate-700 text-sm px-2 py-2";
+      b.innerText=a.nome;
+      b.onclick=()=>selecionarEntra(a,b);
+      listaEntra.appendChild(b);
+    });
+
+    modalSub.classList.remove("hidden");
+    if(!modalSub.classList.contains("flex")) modalSub.classList.add("flex");
+  }
+
+  function selecionarSai(a,btn){
+    sai=a;
+    document.querySelectorAll("#listaSai .btn").forEach(x=>x.classList.remove("btn-active"));
+    btn.classList.add("btn-active");
+  }
+
+  function selecionarEntra(a,btn){
+    entra=a;
+    document.querySelectorAll("#listaEntra .btn").forEach(x=>x.classList.remove("btn-active"));
+    btn.classList.add("btn-active");
+    if(sai && entra) confirmarSub();
+  }
+
+  function confirmarSub(){
+    state.titulares = state.titulares.filter(x=>x.nome!==sai.nome).concat(entra);
+    state.reservas  = state.reservas.filter(x=>x.nome!==entra.nome).concat(sai);
+
+    state.events.push({
+      time: formatTime(seconds),
+      sector: state.sector,
+      posse: state.posse,
+      action: "Substituição",
+      atleta: { nome: `${sai.nome} ⇄ ${entra.nome}` }
+    });
+
+    modalSub.classList.add("hidden");
+    renderLog();
+    renderEscalacao(); // mantém a escalação consistente
+  }
+
+  function fecharSubstituicao(){
+    modalSub.classList.add("hidden");
+  }
+
+function registrarEventoColetivo(action){
+  if(action === "Gol Contra"){
+    state.scoreCon += 1;
+    updateScore();
+  }
+
+  state.events.push({
+    time: formatTime(seconds),
+    sector: state.sector,
+    posse: "adv",
+    action,
+    atleta: { nome: "Adversário" }
+  });
+
+  renderLog();
+}
+
+async function finalizarPartida(){
+  if(state.events.length === 0){
+    if(!confirm("Finalizar sem eventos registrados?")) return;
+  }
+
+  const adversario = document.getElementById("inputAdv").value || "Adversário";
+  const data = document.querySelector("input[type='date']").value;
+
+  const payload = {
+    adversario,
+    data,
+    placar: {
+      pro: state.scorePro,
+      contra: state.scoreCon
+    },
+    titulares: state.titulares.map(a => a.nome),
+    reservas: state.reservas.map(a => a.nome),
+    eventos: state.events,
+    duracao_segundos: seconds,
+    criado_em: new Date()
+  };
+
+  try {
+    await addDoc(collection(db, "scout_partidas"), payload);
+    alert("Partida salva com sucesso.");
+  } catch (e) {
+    console.error(e);
+    alert("Erro ao salvar a partida.");
+  }
+}
+
+
+  /* =========================
+     ADVERSÁRIO (texto no botão)
+  ========================= */
+  const inputAdv=document.getElementById("inputAdv");
+  const btnAdv=document.getElementById("btnAdversario");
+  inputAdv.addEventListener("input",()=> btnAdv.innerText=inputAdv.value||"Adversário");
+
+  // init
+  setSector("meio");
+  document.getElementById("btnEscalacao").classList.remove("hidden");
+
+  /* =========================
+     EXPOR PARA ONCLICK
+  ========================= */
+  window.startTimer = startTimer;
+  window.pauseTimer = pauseTimer;
+  window.resetTimer = resetTimer;
+
+  window.setSector = setSector;
+  window.invertSector = invertSector;
+
+  window.setPosse = setPosse;
+
+  window.abrirEscalacao = abrirEscalacao;
+  window.fecharEscalacao = fecharEscalacao;
+
+  window.abrirModalAtleta = abrirModalAtleta;
+  window.fecharModalAtleta = fecharModalAtleta;
+
+  window.abrirSubstituicao = abrirSubstituicao;
+  window.fecharSubstituicao = fecharSubstituicao;
+
+  window.golPro = golPro;
+  window.golCon = golCon;
+
+// =========================
+// EXPOR FUNÇÕES FALTANTES
+// =========================
+window.registrarEventoColetivo = registrarEventoColetivo;
+window.finalizarPartida = finalizarPartida;
+
+
+  window.undoLast = undoLast;
+</script>
+
+</body>
+</html>
