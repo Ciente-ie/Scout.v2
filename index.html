@@ -43,9 +43,14 @@
 <div class="col-span-4 card space-y-2">
   <div class="flex items-center justify-between">
     <div class="title">Dados da Partida</div>
-    <button id="btnEscalacao" onclick="abrirEscalacao()" class="btn bg-slate-700 px-2 py-[2px] text-[10px] hidden">
-      Escalação
-    </button>
+    <div class="flex items-center gap-1">
+      <button id="btnEscalacao" onclick="abrirEscalacao()" class="btn bg-slate-700 px-2 py-[2px] text-[10px] hidden">
+        Escalação
+      </button>
+      <button onclick="toggleFullscreen()" class="btn bg-slate-800 px-2 py-[2px] text-[10px]">
+        ⛶ Tela Cheia
+      </button>
+    </div>
   </div>
 
   <input id="inputAdv" placeholder="Adversário" class="w-full px-2 py-1 rounded text-black text-xs">
@@ -57,35 +62,37 @@
     <span id="time">00:00</span>
   </div>
 
-  <div class="grid grid-cols-4 gap-1 text-[10px]">
-    <button onclick="startTimer()" class="btn bg-green-600">▶</button>
-    <button onclick="pauseTimer()" class="btn bg-yellow-500">⏸</button>
-    <button onclick="resetTimer()" class="btn bg-slate-600">Int.</button>
-    <button onclick="finalizarPartida()" class="btn bg-red-600">Fim</button>
+  <!-- Controles do cronômetro (botões quadrados) -->
+  <div class="grid grid-cols-4 gap-1">
+    <button onclick="startTimer()" class="btn btn-action bg-green-600">▶</button>
+    <button onclick="pauseTimer()" class="btn btn-action bg-yellow-500">⏸</button>
+    <button onclick="resetTimer()" class="btn btn-action bg-slate-600">Int.</button>
+    <button onclick="finalizarPartida()" class="btn btn-action bg-red-600">Fim</button>
   </div>
 
-  <div class="grid grid-cols-2 gap-1">
-    <button onclick="golPro()" class="btn bg-green-700 text-xs">Gol Pró</button>
-    <button onclick="registrarEventoColetivo('Gol Contra')" class="btn bg-red-700 text-xs">Gol Contra</button>
+  <!-- Gols + Assistência (linha 1) -->
+  <div class="grid grid-cols-3 gap-1">
+    <button onclick="golPro()" class="btn btn-action bg-green-700">Gol Pró</button>
+    <button onclick="registrarEventoColetivo('Gol Contra')" class="btn btn-action bg-red-700">Gol Contra</button>
+    <button onclick="abrirModalAtleta('Assistência')" class="btn btn-action bg-indigo-600">Assistência</button>
   </div>
 
-  <button onclick="abrirSubstituicao()" class="btn bg-blue-600 text-xs">Substituição</button>
-<button onclick="abrirModalAtleta('Assistência')" class="btn bg-indigo-600 text-xs">
-  Assistência
-</button>
-
+  <!-- Substituição + Cartões (linha 2) -->
+  <div class="grid grid-cols-3 gap-1">
+    <button onclick="abrirSubstituicao()" class="btn btn-action bg-blue-600">Substituição</button>
+    <button onclick="abrirModalAtleta('Cartão Amarelo')" class="btn btn-action bg-yellow-400 text-black">Cartão Amarelo</button>
+    <button onclick="abrirModalAtleta('Cartão Vermelho')" class="btn btn-action bg-red-600">Cartão Vermelho</button>
+  </div>
 </div>
 
-
-
-<!-- SETOR -->
+<!-- SETOR DA AÇÃO (AGORA COM AÇÕES) -->
 <div class="col-span-5 card">
   <div class="title flex justify-between">
     <span>Setor da Ação</span>
     <button onclick="invertSector()" class="btn bg-slate-600 px-2 text-[10px]">Inverter</button>
   </div>
 
-  <div class="relative h-[150px] rounded-lg bg-green-700 overflow-hidden">
+  <div class="relative h-[150px] rounded-lg bg-green-700 overflow-hidden mb-2">
     <div class="absolute inset-0 pointer-events-none">
       <div class="absolute left-1/2 top-0 bottom-0 w-[2px] bg-white/35"></div>
       <div class="absolute left-[18%] top-0 bottom-0 w-[2px] bg-white/22"></div>
@@ -98,9 +105,22 @@
       <button id="labelRight" data-sec="ataque" onclick="setSector('ataque')" class="zone btn-sector">Ataque</button>
     </div>
   </div>
+
+  <!-- AÇÕES MOVIDAS PARA AQUI -->
+  <div class="title">Ações</div>
+  <div class="grid grid-cols-4 gap-1">
+    <button onclick="abrirModalAtleta('Boa decisão')" class="btn btn-action bg-emerald-600 text-[10px]">Boa decisão</button>
+    <button onclick="abrirModalAtleta('Erro NF')" class="btn btn-action bg-red-600 text-[10px]">Erro NF</button>
+    <button onclick="abrirModalAtleta('Erro pressão')" class="btn btn-action bg-red-700 text-[10px]">Erro pressão</button>
+    <button onclick="abrirModalAtleta('Defesa difícil')" class="btn btn-action bg-indigo-600 text-[10px]">Defesa difícil</button>
+    <button onclick="abrirModalAtleta('Finalização')" class="btn btn-action bg-slate-600 text-[10px]">Finalização</button>
+    <button onclick="abrirModalAtleta('Chance clara')" class="btn btn-action bg-slate-500 text-[10px]">Chance clara</button>
+    <button onclick="registrarEventoColetivo('Fin. Adv')" class="btn btn-action bg-purple-600 text-[10px]">Fin. Adv</button>
+    <button onclick="registrarEventoColetivo('Chance Adv')" class="btn btn-action bg-purple-700 text-[10px]">Chance Adv</button>
+  </div>
 </div>
 
-<!-- POSSE + CARTÕES -->
+<!-- POSSE + HISTÓRICO (NO LUGAR DOS CARTÕES) -->
 <div class="col-span-3 flex flex-col gap-3">
   <div class="card">
     <div class="title">Posse de Bola</div>
@@ -111,42 +131,20 @@
     </div>
   </div>
 
+  <!-- HISTÓRICO NO LUGAR DOS CARTÕES -->
   <div class="card">
-    <div class="title">Cartões</div>
-    <div class="flex flex-col h-[80px] gap-2">
-      <button onclick="abrirModalAtleta('Cartão Amarelo')" class="btn bg-yellow-400 text-black h-1/2">Cartão Amarelo</button>
-      <button onclick="abrirModalAtleta('Cartão Vermelho')" class="btn bg-red-600 h-1/2">Cartão Vermelho</button>
+    <div class="title flex justify-between">
+      <span>Histórico</span>
+      <button onclick="undoLast()" class="btn bg-yellow-600 px-2 text-[10px]">Desfazer</button>
     </div>
+    <div id="log" class="max-h-[180px] overflow-y-auto"></div>
   </div>
 </div>
 
 </div>
 
-<!-- ================= GRID INFERIOR ================= -->
-<div class="grid grid-cols-12 gap-3">
-<div class="col-span-9 card">
-  <div class="title">Ações</div>
-  <div class="grid grid-cols-4 gap-2">
-    <button onclick="abrirModalAtleta('Boa decisão')" class="btn btn-action bg-emerald-600">Boa decisão</button>
-    <button onclick="abrirModalAtleta('Erro NF')" class="btn btn-action bg-red-600">Erro NF</button>
-    <button onclick="abrirModalAtleta('Erro pressão')" class="btn btn-action bg-red-700">Erro pressão</button>
-    <button onclick="abrirModalAtleta('Defesa difícil')" class="btn btn-action bg-indigo-600">Defesa difícil</button>
-    <button onclick="abrirModalAtleta('Finalização')" class="btn btn-action bg-slate-600">Finalização</button>
-    <button onclick="abrirModalAtleta('Chance clara')" class="btn btn-action bg-slate-500">Chance clara</button>
-    <button onclick="registrarEventoColetivo('Fin. Adv')" class="btn btn-action bg-purple-600">Fin. Adv</button>
-    <button onclick="registrarEventoColetivo('Chance Adv')" class="btn btn-action bg-purple-700">Chance Adv</button>
-  </div>
-</div>
-
-<div class="col-span-3 card">
-  <div class="title flex justify-between">
-    <span>Histórico</span>
-    <button onclick="undoLast()" class="btn bg-yellow-600 px-2 text-[10px]">Desfazer</button>
-  </div>
-  <div id="log" class="max-h-[180px] overflow-y-auto"></div>
-</div>
-</div>
-</div>
+<!-- ================= GRID INFERIOR (AGORA VAZIO - REMOVIDO) ================= -->
+<!-- O conteúdo foi redistribuído para os cards superiores -->
 
 <!-- ================= MODAIS ================= -->
 
@@ -262,6 +260,21 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
   }
   function pauseTimer(){ clearInterval(timer); timer=null; }
   function resetTimer(){ pauseTimer(); seconds=0; elTime.innerText="00:00"; }
+
+  /* =========================
+     TELA CHEIA
+  ========================= */
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Erro ao tentar entrar em tela cheia: ${err.message}`);
+      });
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
 
   /* =========================
      SETOR
@@ -672,6 +685,7 @@ async function finalizarPartida(){
   window.startTimer = startTimer;
   window.pauseTimer = pauseTimer;
   window.resetTimer = resetTimer;
+  window.toggleFullscreen = toggleFullscreen;
 
   window.setSector = setSector;
   window.invertSector = invertSector;
