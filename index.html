@@ -129,7 +129,13 @@
       <button onclick="setPosse('adv')" data-posse="adv" id="btnAdversario" class="btn btn-posse bg-blue-600" style="height:40%">Adversário</button>
       <button onclick="setPosse('parada')" data-posse="parada" class="btn btn-posse bg-yellow-500 text-black" style="height:20%">Bola Parada</button>
     </div>
-  </div>
+  
+
+    <!-- ROUBADA DE BOLA -->
+    <button onclick="abrirRoubada()" class="btn bg-emerald-700 text-[11px] py-2 mt-2">
+      Roubada de Bola
+    </button>
+</div>
 
   <!-- HISTÓRICO NO LUGAR DOS CARTÕES -->
   <div class="card">
@@ -199,6 +205,27 @@
   </div>
 </div>
 
+<!-- ROUBADA DE BOLA -->
+<div id="modalRoubada" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+  <div class="bg-slate-900 w-[360px] max-w-[92vw] rounded-xl p-5">
+    <div class="flex justify-between mb-4">
+      <h3 class="font-bold text-lg">Roubada de Bola</h3>
+      <button onclick="fecharRoubada()" class="text-red-400">✕</button>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+      <button onclick="registrarRoubada('Pressão Ofensiva')" class="btn bg-green-600 py-3">
+        Pressão Ofensiva
+      </button>
+
+      <button onclick="registrarRoubada('Pressão Pós-perda')" class="btn bg-emerald-800 py-3">
+        Pressão Pós-perda
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
   import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
@@ -220,6 +247,8 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
   const modalEscalacao = document.getElementById("modalEscalacao");
   const modalAtleta = document.getElementById("modalAtleta");
   const modalSub = document.getElementById("modalSub");
+
+  const modalRoubada = document.getElementById("modalRoubada");
 
   const tituloModalAtleta = document.getElementById("tituloModalAtleta");
   const listaAtletasAcao = document.getElementById("listaAtletasAcao");
@@ -306,11 +335,29 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
   /* =========================
      POSSE
   ========================= */
+  
   function setPosse(p){
+    // registra apenas quando houver mudança real de posse
+    const prev = state.posse;
+    if(prev === p) return;
+
     state.posse=p;
     document.querySelectorAll(".btn-posse").forEach(b=>{
       b.classList.toggle("btn-active", b.dataset.posse===p);
     });
+
+    const label = (p==="america") ? "América" : (p==="adv") ? "Adversário" : "Bola Parada";
+
+    state.events.push({
+      time: formatTime(seconds),
+      sector: state.sector,
+      posse: p,
+      action: `Posse — ${label}`,
+      atleta: { nome: "Coletivo" },
+      meta: { type: "posse", from: prev, to: p }
+    });
+
+    renderLog();
   }
 
   /* =========================
@@ -619,6 +666,30 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
     modalSub.classList.add("hidden");
   }
 
+  /* =========================
+     ROUBADA DE BOLA (PRESSÕES)
+  ========================= */
+  function abrirRoubada(){
+    modalRoubada.classList.remove("hidden");
+    if(!modalRoubada.classList.contains("flex")) modalRoubada.classList.add("flex");
+  }
+  function fecharRoubada(){
+    modalRoubada.classList.add("hidden");
+  }
+  function registrarRoubada(tipo){
+    state.events.push({
+      time: formatTime(seconds),
+      sector: state.sector,
+      posse: state.posse,
+      action: `Roubada — ${tipo}`,
+      atleta: { nome: "Coletivo" },
+      meta: { type: "roubada", tipo }
+    });
+    fecharRoubada();
+    renderLog();
+  }
+
+
 function registrarEventoColetivo(action){
   if(action === "Gol Contra"){
     state.scoreCon += 1;
@@ -701,6 +772,10 @@ async function finalizarPartida(){
   window.abrirSubstituicao = abrirSubstituicao;
   window.fecharSubstituicao = fecharSubstituicao;
 
+
+  window.abrirRoubada = abrirRoubada;
+  window.fecharRoubada = fecharRoubada;
+  window.registrarRoubada = registrarRoubada;
   window.golPro = golPro;
   window.golCon = golCon;
 
