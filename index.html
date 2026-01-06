@@ -130,11 +130,18 @@
       <button onclick="setPosse('parada')" data-posse="parada" class="btn btn-posse bg-yellow-500 text-black" style="height:20%">Bola Parada</button>
     </div>
   
-
-    <!-- ROUBADA DE BOLA -->
-    <button onclick="abrirRoubada()" class="btn bg-emerald-700 text-[11px] py-2 mt-2">
-      Roubada de Bola
-    </button>
+    <!-- ROUBADA, ESCANTEIO E FALTA -->
+    <div class="grid grid-cols-3 gap-1 mt-2">
+      <button onclick="abrirRoubada()" class="btn bg-emerald-700 text-[10px] py-2">
+        Roubada
+      </button>
+      <button onclick="abrirModalBolaParada('Escanteio')" class="btn bg-sky-700 text-[10px] py-2">
+        Escanteio
+      </button>
+      <button onclick="abrirModalBolaParada('Falta')" class="btn bg-orange-700 text-[10px] py-2">
+        Falta
+      </button>
+    </div>
 </div>
 
   <!-- HISTÓRICO NO LUGAR DOS CARTÕES -->
@@ -148,9 +155,6 @@
 </div>
 
 </div>
-
-<!-- ================= GRID INFERIOR (AGORA VAZIO - REMOVIDO) ================= -->
-<!-- O conteúdo foi redistribuído para os cards superiores -->
 
 <!-- ================= MODAIS ================= -->
 
@@ -225,6 +229,28 @@
   </div>
 </div>
 
+<!-- BOLA PARADA (ESCANTEIO / FALTA) -->
+<div id="modalBolaParada" class="fixed inset-0 bg-black/70 hidden items-center justify-center z-50">
+  <div class="bg-slate-900 w-[360px] max-w-[92vw] rounded-xl p-5">
+    <div class="flex justify-between mb-4">
+      <h3 id="tituloModalBolaParada" class="font-bold text-lg"></h3>
+      <button onclick="fecharModalBolaParada()" class="text-red-400">✕</button>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3">
+      <button onclick="registrarBolaParada('Bola na área')" class="btn bg-blue-600 py-3">
+        Bola na área
+      </button>
+      <button onclick="registrarBolaParada('Jogada Curta')" class="btn bg-indigo-600 py-3">
+        Jogada Curta
+      </button>
+      <button onclick="registrarBolaParada('Finalização Adversário')" class="btn bg-purple-600 py-3">
+        Finalização Adversário
+      </button>
+    </div>
+  </div>
+</div>
+
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
@@ -247,10 +273,11 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
   const modalEscalacao = document.getElementById("modalEscalacao");
   const modalAtleta = document.getElementById("modalAtleta");
   const modalSub = document.getElementById("modalSub");
-
   const modalRoubada = document.getElementById("modalRoubada");
+  const modalBolaParada = document.getElementById("modalBolaParada");
 
   const tituloModalAtleta = document.getElementById("tituloModalAtleta");
+  const tituloModalBolaParada = document.getElementById("tituloModalBolaParada");
   const listaAtletasAcao = document.getElementById("listaAtletasAcao");
 
   const listaTitulares = document.getElementById("listaTitulares");
@@ -268,7 +295,8 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
     elenco: [],
     titulares: [],
     reservas: [],
-    pending: null // { action, scoreDeltaPro, scoreDeltaCon }
+    pending: null, // { action, scoreDeltaPro, scoreDeltaCon }
+    tipoBolaParada: ""
   };
 
   /* =========================
@@ -564,6 +592,7 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
 
         row.appendChild(left);
         row.appendChild(actions);
+        row.appendChild(actions);
         bloco.appendChild(row);
       });
 
@@ -689,6 +718,31 @@ import { addDoc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-fires
     renderLog();
   }
 
+  /* =========================
+     BOLA PARADA (ESCANTEIO / FALTA)
+  ========================= */
+  function abrirModalBolaParada(tipo){
+    state.tipoBolaParada = tipo;
+    tituloModalBolaParada.innerText = tipo;
+    modalBolaParada.classList.remove("hidden");
+    if(!modalBolaParada.classList.contains("flex")) modalBolaParada.classList.add("flex");
+  }
+  function fecharModalBolaParada(){
+    modalBolaParada.classList.add("hidden");
+  }
+  function registrarBolaParada(opcao){
+    state.events.push({
+      time: formatTime(seconds),
+      sector: state.sector,
+      posse: state.posse,
+      action: `${state.tipoBolaParada} — ${opcao}`,
+      atleta: { nome: "Coletivo" },
+      meta: { type: state.tipoBolaParada.toLowerCase(), opcao }
+    });
+    fecharModalBolaParada();
+    renderLog();
+  }
+
 
 function registrarEventoColetivo(action){
   if(action === "Gol Contra"){
@@ -776,6 +830,11 @@ async function finalizarPartida(){
   window.abrirRoubada = abrirRoubada;
   window.fecharRoubada = fecharRoubada;
   window.registrarRoubada = registrarRoubada;
+
+  window.abrirModalBolaParada = abrirModalBolaParada;
+  window.fecharModalBolaParada = fecharModalBolaParada;
+  window.registrarBolaParada = registrarBolaParada;
+
   window.golPro = golPro;
   window.golCon = golCon;
 
